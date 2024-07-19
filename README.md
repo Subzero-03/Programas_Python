@@ -34,3 +34,9 @@ Cada programa puede tener sus propias dependencias, que estarán listadas en los
 
 ```bash
 pip install -r requirements.txt
+
+> [!WARNING]
+REPITO, NO ME HAGO RESPONSABLE DEL USO QUE LE DEN A LOS PROGRAMAS
+
+> [!NOTE]
+También hay una sección de juegos
