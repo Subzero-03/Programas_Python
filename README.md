@@ -11,6 +11,7 @@
 - [Contribuciones](#contribuciones)
 - [Licencia](#licencia)
 - [Agradecimientos](#agradecimientos)
+- [Avisos](#avisos)
 
 ## Introducción
 
@@ -34,7 +35,9 @@ Cada programa puede tener sus propias dependencias, que estarán listadas en los
 
 ```bash
 pip install -r requirements.txt
+```
 
+## Avisos
 > [!WARNING]
 REPITO, NO ME HAGO RESPONSABLE DEL USO QUE LE DEN A LOS PROGRAMAS
 
