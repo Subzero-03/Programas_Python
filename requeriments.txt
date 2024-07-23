@@ -4,3 +4,5 @@ qrcode[pil]
 Pillow
 cryptography
 flask firebase-admin
+npyscreen
+getpass
