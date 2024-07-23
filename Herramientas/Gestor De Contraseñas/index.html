@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Firebase Auth</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js"></script>
+</head>
+<body>
+    <h1>Login with Firebase</h1>
+    <div id="recaptcha-container"></div>
+    <input type="text" id="phone-number" placeholder="Phone number">
+    <button onclick="signInWithPhoneNumber()">Send Code</button>
+
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        const auth = firebase.auth();
+        const recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container');
+
+        function signInWithPhoneNumber() {
+            const phoneNumber = document.getElementById('phone-number').value;
+            const appVerifier = recaptchaVerifier;
+
+            auth.signInWithPhoneNumber(phoneNumber, appVerifier)
+                .then((confirmationResult) => {
+                    // SMS sent. Prompt user to type the code from the message, then sign the user in with the code.
+                    const code = window.prompt('Enter the verification code you received');
+                    confirmationResult.confirm(code)
+                        .then((result) => {
+                            // User signed in successfully.
+                            const user = result.user;
+                            alert('Signed in as: ' + user.uid);
+                            // Send token to the backend
+                            fetch('/verify', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({token: user.getIdToken()})
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.status === 'success') {
+                                    alert('Token verified successfully');
+                                } else {
+                                    alert('Token verification failed');
+                                }
+                            });
+                        })
+                        .catch((error) => {
+                            console.error('Error during signInWithPhoneNumber', error);
+                        });
+                })
+                .catch((error) => {
+                    console.error('Error during signInWithPhoneNumber', error);
+                });
+        }
+    </script>
+</body>
+</html>
