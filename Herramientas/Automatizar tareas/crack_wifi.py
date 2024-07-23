@@ -8,24 +8,44 @@ class NetworkScannerApp(npyscreen.NPSAppManaged):
 
 class MainForm(npyscreen.FormBaseNew):
     def create(self):
-        self.network_interfaces = []
+        self.network_interfaces = list_network_interfaces()
         self.networks = []
         self.selected_interface = None
         self.selected_network = None
         self.output_file = None
 
-        self.interface_list = self.add(npyscreen.TitleSelectOne, name="Interfaces de Red:", values=self.network_interfaces, scroll_exit=True)
-        self.network_list = self.add(npyscreen.TitleSelectOne, name="Redes WiFi:", values=self.networks, scroll_exit=True)
-        self.scan_button = self.add(npyscreen.ButtonPress, name="Escanear Redes", when_pressed=self.scan_networks)
-        self.capture_button = self.add(npyscreen.ButtonPress, name="Iniciar Captura", when_pressed=self.start_capture)
-        self.deauth_button = self.add(npyscreen.ButtonPress, name="Desvincular Dispositivo", when_pressed=self.deauth_device)
-        self.crack_button = self.add(npyscreen.ButtonPress, name="Crackear Contraseña", when_pressed=self.crack_password)
-        self.exit_button = self.add(npyscreen.ButtonPress, name="Salir")
+        # Configuración de los widgets
+        self.interface_list = self.add(npyscreen.TitleSelectOne, 
+                                       name="Interfaces de Red:", 
+                                       values=self.network_interfaces, 
+                                       scroll_exit=True,
+                                       max_height=10)  # Ajustar altura máxima
+        self.network_list = self.add(npyscreen.TitleSelectOne, 
+                                     name="Redes WiFi:", 
+                                     values=self.networks, 
+                                     scroll_exit=True,
+                                     max_height=10)  # Ajustar altura máxima
+        self.scan_button = self.add(npyscreen.ButtonPress, 
+                                    name="Escanear Redes", 
+                                    when_pressed=self.scan_networks)
+        self.capture_button = self.add(npyscreen.ButtonPress, 
+                                       name="Iniciar Captura", 
+                                       when_pressed=self.start_capture)
+        self.deauth_button = self.add(npyscreen.ButtonPress, 
+                                      name="Desvincular Dispositivo", 
+                                      when_pressed=self.deauth_device)
+        self.crack_button = self.add(npyscreen.ButtonPress, 
+                                     name="Crackear Contraseña", 
+                                     when_pressed=self.crack_password)
+        self.exit_button = self.add(npyscreen.ButtonPress, 
+                                    name="Salir", 
+                                    when_pressed=self.exit_application)
 
     def scan_networks(self, widget):
         self.network_interfaces = list_network_interfaces()
         self.interface_list.values = self.network_interfaces
         self.interface_list.display()
+
         if self.network_interfaces:
             self.selected_interface = self.interface_list.get_selected_objects()[0]
             self.networks = scan_networks(self.selected_interface)
@@ -35,25 +55,28 @@ class MainForm(npyscreen.FormBaseNew):
     def start_capture(self, widget):
         if self.networks:
             self.selected_network = self.network_list.get_selected_objects()[0]
-            channel = input("Canal del router: ")
-            bssid = input("BSSID del router: ")
-            self.output_file = input("Nombre del archivo de salida (sin extensión): ")
+            channel = npyscreen.notify_input("Canal del router: ")
+            bssid = npyscreen.notify_input("BSSID del router: ")
+            self.output_file = npyscreen.notify_input("Nombre del archivo de salida (sin extensión): ")
             capture_handshake(channel, bssid, self.selected_interface + 'mon', self.output_file)
-            print(f"Captura iniciada para la red: {self.selected_network}")
+            npyscreen.notify_confirm(f"Captura iniciada para la red: {self.selected_network}")
 
     def deauth_device(self, widget):
         if not self.selected_network:
-            print("No se ha seleccionado ninguna red.")
+            npyscreen.notify_confirm("No se ha seleccionado ninguna red.")
             return
-        device_mac = input("MAC del dispositivo a desvincular: ")
+        device_mac = npyscreen.notify_input("MAC del dispositivo a desvincular: ")
         deauthenticate_device(self.selected_network, device_mac, self.selected_interface + 'mon')
-        print(f"Desvinculación del dispositivo {device_mac} enviada.")
+        npyscreen.notify_confirm(f"Desvinculación del dispositivo {device_mac} enviada.")
 
     def crack_password(self, widget):
         capture_file = f"{self.output_file}.cap"
-        dictionary_file = input("Ruta del diccionario: ")
+        dictionary_file = npyscreen.notify_input("Ruta del diccionario: ")
         crack_password(dictionary_file, self.selected_network, capture_file)
-        print(f"Proceso de crackeo iniciado para el archivo: {capture_file}")
+        npyscreen.notify_confirm(f"Proceso de crackeo iniciado para el archivo: {capture_file}")
+
+    def exit_application(self, widget):
+        self.parentApp.exit()
 
 def run_command_as_root(command):
     try:
@@ -69,8 +92,10 @@ def list_network_interfaces():
         interfaces = []
         for line in result.stdout.split('\n'):
             if 'no wireless extensions.' not in line:
-                interface = line.split()[0]
-                interfaces.append(interface)
+                parts = line.split()
+                if parts:
+                    interface = parts[0]
+                    interfaces.append(interface)
         return interfaces
     except subprocess.CalledProcessError as e:
         print(f"Error al listar interfaces de red: {e}")
